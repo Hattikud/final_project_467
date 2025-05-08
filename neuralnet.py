@@ -12,8 +12,7 @@ X_train, y_train, X_dev, y_dev, X_test, y_test = processData(data)
 
 #Create MLPClassifier using lbfgs
 from sklearn.neural_network import MLPClassifier
-clf = MLPClassifier(solver='adam', alpha=1e-5,
-                    hidden_layer_sizes=(10, 2), random_state=1, max_iter=1000)
+clf = MLPClassifier(hidden_layer_sizes=(40, 8), activation='relu', solver='adam', alpha=0.0001, batch_size='auto', learning_rate='constant', learning_rate_init=0.001)
 clf.fit(X_train, y_train)
 y_train_pred = clf.predict(X_train)
 y_dev_pred = clf.predict(X_dev)
@@ -39,4 +38,4 @@ plt.tight_layout()
 plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
-plt.show()
+#plt.show()

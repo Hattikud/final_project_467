@@ -12,7 +12,7 @@ X_train, y_train, X_dev, y_dev, X_test, y_test = processData(data)
 
 #Create Random Forest Classifier
 from sklearn.ensemble import RandomForestClassifier
-rfc = RandomForestClassifier(random_state=0, n_estimators=1000)
+rfc = RandomForestClassifier(random_state=0, n_estimators=1000, criterion='gini', max_depth=None)
 
 #Fit it to training data
 rfc.fit(X_train, y_train)
@@ -47,4 +47,4 @@ plt.tight_layout()
 plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
-plt.show()
+#plt.show()
