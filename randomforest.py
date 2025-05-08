@@ -31,10 +31,10 @@ y_test_pred = rfc.predict(X_test)
 print("Training Accuracy:",metrics.accuracy_score(y_train, y_train_pred))
 print("Dev Accuracy:",metrics.accuracy_score(y_dev, y_dev_pred))
 print("Test Accuracy:",metrics.accuracy_score(y_test, y_test_pred))
-cnf_matrix = metrics.confusion_matrix(y_test, y_test_pred)
 
 
 #Heatmap
+cnf_matrix = metrics.confusion_matrix(y_test, y_test_pred)
 class_names=[0,1] # name  of classes
 fig, ax = plt.subplots()
 tick_marks = np.arange(len(class_names))

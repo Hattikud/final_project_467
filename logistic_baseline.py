@@ -1,53 +1,93 @@
-import pandas as pd
+"""Based off code for HW2 Problem 1"""
+import argparse
+import sys
+from tqdm import tqdm
 
-data=pd.read_csv("data/water_potability.csv")
-
-#Fill in empty entries with feature average
-data = data.fillna(data.mean())
-
-#Only use four features
-X=data.loc[:, ["ph", "Hardness", "Solids", "Sulfate"]]
-y=data.iloc[:, 9]
-#print(X)
-
-#Split into test/training
-from sklearn.model_selection import train_test_split
-X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.25)
-
-from sklearn.linear_model import LogisticRegression
-
-#Create classifier
-logreg = LogisticRegression(class_weight='balanced', max_iter=1000)
-#Fit classifier to training data
-logreg.fit(X_train,y_train)
-#Make predictions
-y_train_pred=logreg.predict(X_train)
-y_test_pred=logreg.predict(X_test)
-
-#Accuracy
-from sklearn import metrics
-
-print("Training Accuracy:",metrics.accuracy_score(y_test, y_test_pred))
-print("Test Accuracy:",metrics.accuracy_score(y_test, y_test_pred))
-
-cnf_matrix = metrics.confusion_matrix(y_test, y_test_pred)
-cnf_matrix
-
-# Libraries used for plots and arrays.
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+from scipy.special import expit as sigmoid
 
-class_names=[0,1] # name  of classes
-fig, ax = plt.subplots()
-tick_marks = np.arange(len(class_names))
-plt.xticks(tick_marks, class_names)
-plt.yticks(tick_marks, class_names)
-# create heatmap
-sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu" ,fmt='g')
-ax.xaxis.set_label_position("top")
-plt.tight_layout()
-plt.title('Confusion matrix', y=1.1)
-plt.ylabel('Actual label')
-plt.xlabel('Predicted label')
-plt.show()
+OPTS = None
+
+def predict(w, X):
+    """Return the predictions using weight vector w on inputs X.
+
+    Args:
+        - w: Vector of size (D,)
+        - X: Matrix of size (M, D)
+    Returns:
+        - Predicted classes as a numpy vector of size (M,). Each entry should be either -1 or +1.
+    """
+    preds_sig = sigmoid(X.dot(w)) 
+    preds_class = [1 if pred > 0.5 else -1 for pred in preds_sig]
+    return preds_class
+
+
+def train(X_train, y_train, lr=1e-1, num_iters=5000, l2_reg=0.0):
+    """Train linear regression using gradient descent.
+
+    Args:
+        - X_train: Matrix of size (N, D)
+        - y_train: Vector os size (N,)
+        - lr: Learning rate
+        - num_iters: Number of iterations of gradient descent to run
+        - l2_reg: lambda hyperparameter for using L2 regularization
+    Returns:
+        - Weight vector w of size (D,)
+    """
+    N, D = X_train.shape
+    w = np.zeros(D)
+    for t in range(num_iters):
+        preds = X_train.dot(w)
+        margins = (-1 * y_train) * (preds)
+
+        gradient = (1/N) * -1 * (sigmoid(margins) * y_train).dot(X_train) + (l2_reg * w)
+        w -= lr * gradient
+    #print("w: ", w)
+    return w
+
+def evaluate(w, X, y, name):
+    """Measure and print accuracy of a predictor on a dataset."""
+    y_preds = predict(w, X)
+    acc = np.mean(y_preds == y)
+    print('    {} Accuracy: {}'.format(name, acc))
+    return acc
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--learning-rate', '-r', type=float, default=2)
+    parser.add_argument('--num-iters', '-T', type=int, default=10000)
+    parser.add_argument('--l2', type=float, default=0.0)
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--plot-weights')
+    return parser.parse_args()
+
+import pandas as pd
+import sklearn
+from sklearn.preprocessing import StandardScaler
+
+from processing import processData
+
+def main():
+    # Read the data
+    all_data = pd.read_csv("data/water_potability.csv")
+    X_train, y_train, X_dev, y_dev, X_test, y_test = processData(all_data)
+    y_train = y_train.replace({0: -1, 1: 1})
+    y_dev = y_dev.replace({0: -1, 1: 1})
+    y_test= y_test.replace({0: -1, 1: 1})
+
+    #print(X_train)
+
+    # Train with gradient descent
+    w = train(X_train, y_train, lr=OPTS.learning_rate, num_iters=OPTS.num_iters, l2_reg=OPTS.l2)
+
+    # Evaluate model
+    train_acc = evaluate(w, X_train, y_train, 'Train')
+    dev_acc = evaluate(w, X_dev, y_dev, 'Dev')
+    if OPTS.test:
+        test_acc = evaluate(w, X_test, y_test, 'Test')
+
+if __name__ == '__main__':
+    OPTS = parse_args()
+    main()
+
