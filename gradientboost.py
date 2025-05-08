@@ -1,51 +1,44 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn import metrics
+
+from processing import processData
 
 #Read in data
 data=pd.read_csv("data/water_potability.csv")
-
-#Fill in blanks with feature means
-data = data.fillna(data.mean())
-data = data.sample(frac=1, random_state=42).reset_index(drop=True)
-
-#X=data.loc[:, ["ph", "Hardness", "Solids", "Sulfate"]]
-#X=data.iloc[:, [0,9]]
-#y=data.iloc[:, 9]
-
-firstDiv = int(0.5 * len(data))
-secondDiv = int(0.75 * len(data))
-train_data = data[1:firstDiv]
-dev_data = data[firstDiv:secondDiv]
-test_data = data[secondDiv:]
-
-X_train=train_data.iloc[:, 0:9]
-y_train=train_data.iloc[:, 9]
-#print(y_train.value_counts(normalize=False))
-    
-X_dev=dev_data.iloc[:, 0:9]
-y_dev=dev_data.iloc[:, 9]
-#print(y_dev.value_counts(normalize=False))
-
-X_test=test_data.iloc[:, 0:9]
-y_test=test_data.iloc[:, 9]
-#print(y_test.value_counts(normalize=False))
-
-from sklearn.preprocessing import StandardScaler
-
-scaler = StandardScaler()
-scaler.fit(X_train)
-X_train = scaler.transform(X_train)
-#print(X_train)
-X_dev = scaler.transform(X_dev)
-X_test = scaler.transform(X_test)
-
+X_train, y_train, X_dev, y_dev, X_test, y_test = processData(data)
 
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 
 model = HistGradientBoostingClassifier(max_bins=255, max_iter=100)
 model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-print(f'Accuracy: {accuracy:.3f}')
+y_train_pred = model.predict(X_train)
+y_dev_pred = model.predict(X_dev)
+y_test_pred = model.predict(X_test)
+
+#Accuracy Scores
+print("Training Accuracy:",metrics.accuracy_score(y_train, y_train_pred))
+print("Dev Accuracy:",metrics.accuracy_score(y_dev, y_dev_pred))
+print("Test Accuracy:",metrics.accuracy_score(y_test, y_test_pred))
+cnf_matrix = metrics.confusion_matrix(y_test, y_test_pred)
+
+
+#Heatmap
+class_names=[0,1] # name  of classes
+fig, ax = plt.subplots()
+tick_marks = np.arange(len(class_names))
+plt.xticks(tick_marks, class_names)
+plt.yticks(tick_marks, class_names)
+# create heatmap
+sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu" ,fmt='g')
+ax.xaxis.set_label_position("top")
+plt.tight_layout()
+plt.title('Confusion matrix', y=1.1)
+plt.ylabel('Actual label')
+plt.xlabel('Predicted label')
+plt.show()
+
 

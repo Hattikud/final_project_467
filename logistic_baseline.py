@@ -1,31 +1,36 @@
-##Import library and read data
 import pandas as pd
+
 data=pd.read_csv("data/water_potability.csv")
 
+#Fill in empty entries with feature average
 data = data.fillna(data.mean())
 
-### X are the variables that predict and y the variable we are trying to predict.
+#Only use four features
 X=data.loc[:, ["ph", "Hardness", "Solids", "Sulfate"]]
 y=data.iloc[:, 9]
-print(X)
+#print(X)
 
-### The data has to be divided in training and test set.
+#Split into test/training
 from sklearn.model_selection import train_test_split
 X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.25)
 
-###We import the model that will be used.
 from sklearn.linear_model import LogisticRegression
 
-# Create an instance of the model.
+#Create classifier
 logreg = LogisticRegression(class_weight='balanced', max_iter=1000)
-# Training the model.
+#Fit classifier to training data
 logreg.fit(X_train,y_train)
-# Do prediction.
-y_pred=logreg.predict(X_test)
+#Make predictions
+y_train_pred=logreg.predict(X_train)
+y_test_pred=logreg.predict(X_test)
 
-# Analyzing the results
+#Accuracy
 from sklearn import metrics
-cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
+
+print("Training Accuracy:",metrics.accuracy_score(y_test, y_test_pred))
+print("Test Accuracy:",metrics.accuracy_score(y_test, y_test_pred))
+
+cnf_matrix = metrics.confusion_matrix(y_test, y_test_pred)
 cnf_matrix
 
 # Libraries used for plots and arrays.
@@ -46,5 +51,3 @@ plt.title('Confusion matrix', y=1.1)
 plt.ylabel('Actual label')
 plt.xlabel('Predicted label')
 plt.show()
-
-print("Accuracy:",metrics.accuracy_score(y_test, y_pred))
